@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import {useParams, BrowserRouter as Router, Routes, Route, Link} from 'react-router-dom'
+import { useField } from './hooks'
+
 
 const Menu = () => {
   const padding = {
@@ -58,17 +60,23 @@ const Footer = () => (
 )
 
 const CreateNew = (props) => {
-  const [content, setContent] = useState('')
-  const [author, setAuthor] = useState('')
-  const [info, setInfo] = useState('')
+  const { clearcomp: clearContent, ...content } = useField('content')
+  const { clearcomp: clearAuthor, ...author } = useField('author')
+  const { clearcomp: clearInfo, ...info } = useField('info')
 
+const clearField = () => {
+  clearContent(),
+  clearAuthor(),
+  clearInfo()
+}
 
   const handleSubmit = (e) => {
+    console.log(content)
     e.preventDefault()
     props.addNew({
-      content,
-      author,
-      info,
+      content: content.value,
+      author: author.value,
+      info: info.value,
       votes: 0
     })
   }
@@ -79,17 +87,17 @@ const CreateNew = (props) => {
       <form onSubmit={handleSubmit}>
         <div>
           content
-          <input name='content' value={content} onChange={(e) => setContent(e.target.value)} />
+          <input {...content} />
         </div>
         <div>
           author
-          <input name='author' value={author} onChange={(e) => setAuthor(e.target.value)} />
+          <input {...author} />
         </div>
         <div>
           url for more info
-          <input name='info' value={info} onChange={(e)=> setInfo(e.target.value)} />
+          <input {...info} />
         </div>
-        <button>create</button>
+        <button>create</button><button type="reset" onClick={clearField}>reset</button>
       </form>
     </div>
   )
