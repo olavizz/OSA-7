@@ -1,60 +1,98 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useParams } from 'react-router-dom'
 import { PropTypes } from "prop-types";
+import blogService from '../services/blogs'
+import { useSelector, useDispatch } from 'react-redux'
+import { setBlogs, addBlogs, removeBlog, addLikes } from "../reducers/BlogReducer";
+import { setNotification } from "../reducers/NotificationReducer"
 
-const Blog = ({ blog, updatedBlog, deleteBlog }) => {
+const Blog = ({ blog, updateLikes: updatedBlog, removeBlog: deleteBlog }) => {
+
+  const dispatch = useDispatch()
+
   const blogStyle = {
-    background: "lightgrey",
     paddingTop: 10,
     paddingLeft: 2,
-    border: "solid",
     borderWidth: 1,
     marginBottom: 5,
   };
 
-  const [visible, setVisible] = useState(false);
+  const [Specificblog, setBlog] = useState(null)
+  const [comments, setComments] = useState(null)
+  const [newComment, setNewComment] = useState('')
 
-  const hideWhenVisible = { display: visible ? "none" : "" };
-  const showWhenVisible = { display: visible ? "" : "none" };
+  const id = useParams().id
+  useEffect(() => {
+    const getBlogs = async () => {
+      try {
+        const Info = await blogService.getAll()
+        const AllTheComments = await blogService.getComments(id)
 
-  const toggleVisibility = () => {
-    console.log("nappia painettu");
-    console.log(visible);
-    setVisible(!visible);
-    console.log(visible);
-  };
+        setComments(AllTheComments)
+        const abc = Info.find(blog => blog.id.toString() === id)
+        setBlog(abc)
+      } catch (error) {
+        console.log(error.message)
+      }
+    }
+    getBlogs()
+  }, [id, newComment])
 
   const updateLikes = () => {
-    updatedBlog({
-      ...blog,
-      likes: blog.likes + 1,
-    });
-  };
+    const Ublog = { ...Specificblog,
+      likes: Specificblog.likes + 1 }
+    updatedBlog( Ublog )
+    dispatch(addLikes(
+      Ublog
+    ))
+    setBlog({
+      ...Specificblog,
+      likes: Specificblog.likes + 1
+    })
+    dispatch(setNotification(`You voted ${Specificblog.title}`, 5))
 
-  const removeBlog = () => {
+  }
+
+  const removeBlog = (blog) => {
     if (window.confirm(`Remove blog ${blog.title} by ${blog.author}`)) {
-      console.log(blog);
       deleteBlog({ blog });
     }
-  };
+    setBlog(null)
+  }
+
+  const handleChange = (event) => {
+    setNewComment(event.target.value)
+  }
+
+  const handleComment = (event) => {
+    event.preventDefault()
+    blogService.addComment(id ,newComment)
+    setNewComment('')
+
+  }
+
+  if (!Specificblog) {
+    return null
+  }
 
   return (
     <div style={blogStyle}>
-      {blog.title} {blog.author}{" "}
-      <button style={hideWhenVisible} onClick={toggleVisibility}>
-        view
-      </button>{" "}
-      <button style={showWhenVisible} onClick={toggleVisibility}>
-        hide
-      </button>
-      <div style={showWhenVisible}>
-        {blog.url} <br />
-        {blog.likes} <button onClick={updateLikes}>like</button> <br />
-        {blog.user && blog.user.name} <br />
-        <button onClick={removeBlog}>remove</button>
-      </div>
-    </div>
-  );
-};
-Blog.propTypes = {};
+      <h2>{Specificblog.title}</h2>
+      <div>{Specificblog.url}</div>
+      <div>{Specificblog.likes} likes <button onClick={updateLikes}>like</button></div> <br />
+      <button onClick={() => removeBlog(Specificblog)} >remove</button>
+      <div>added by {Specificblog.user.name}</div> <br />
+      <div><h3><strong>comments</strong></h3></div> <br />
+      <form onSubmit={handleComment}>
+        <input value={newComment} onChange={handleChange} /><button type="submit">add comment</button>
+      </form>
+      {comments && comments.map((comment, index) => (
+        <div key={`${comment}-${index}`}>
+          <li style={{ marginLeft: '20px' }}>{comment.content}</li>
+        </div>  ))}
 
-export default Blog;
+    </div>
+  )
+}
+
+export default Blog

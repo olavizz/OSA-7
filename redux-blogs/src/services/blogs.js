@@ -7,9 +7,9 @@ const setToken = (newToken) => {
   token = `Bearer ${newToken}`;
 };
 
-const getAll = () => {
-  const request = axios.get(baseUrl);
-  return request.then((response) => response.data);
+const getAll = async () => {
+  const request = await axios.get(baseUrl);
+  return request.data
 };
 
 const create = async (newObject) => {
@@ -24,8 +24,6 @@ const update = async (newObject) => {
   const config = {
     headers: { Authorization: token },
   };
-  console.log(config);
-  console.log(newObject);
   const response = await axios.put(
     `${baseUrl}/${newObject.id}`,
     newObject,
@@ -45,4 +43,22 @@ const deleblog = async (blog) => {
   return response.data;
 };
 
-export default { getAll, create, setToken, update, deleblog };
+const getComments = async (id) => {
+  try {
+    const response = await axios.get(`${baseUrl}/${id}/comments`)
+    return response.data
+  } catch (error) {
+    console.log(error.message)
+  }
+}
+
+const addComment = async (id, comment) => {
+  const object = {
+    'id': id,
+    'content': comment
+  }
+  const response = await axios.post(`${baseUrl}/${id}/comments`, object)
+  console.log(response)
+}
+
+export default { getAll, create, setToken, update, deleblog, getComments, addComment };

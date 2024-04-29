@@ -5,9 +5,12 @@ import userService from './services/users'
 import loginService from "./services/login";
 import Togglable from "./components/Togglable";
 import BlogForm from "./components/BlogForm";
+import Users from "./components/User"
+import SpecificUser from "./components/SpecificUser";
 import { useSelector, useDispatch } from 'react-redux'
 import { setNotification } from "./reducers/NotificationReducer"
-import { setBlogs, addBlogs, removeBlog, IncreaseLikes } from "./reducers/BlogReducer";
+import { setBlogs, addBlogs, removeBlog, addLikes } from "./reducers/BlogReducer";
+import { useParams, BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom'
 
 
 const App = () => {
@@ -74,11 +77,9 @@ const App = () => {
   const updateObject = async (updatedObj) => {
     try {
       const updatedLikes = await blogService.update(updatedObj);
-      const blogs = await blogService.getAll();
-      dispatch(IncreaseLikes(updatedObj));
-      dispatch(setNotification(`You voted ${updatedObj.title}`, 5))
+      const blogs = await blogService.getAll()
     } catch (error) {
-      console.log(error);
+      console.log(error)
     }
   };
 
@@ -93,6 +94,14 @@ const App = () => {
   };
 
   const AllTheBlogs = () => {
+    const blogview = {
+      background: 'lightgrey',
+      paddingTop: 10,
+      paddingLeft: 2,
+      border: 'solid',
+      borderWidth: 1,
+      marginBottom: 5,
+    };
     const blogs = useSelector(({ EveryBlog }) => {
       return EveryBlog
     })
@@ -101,21 +110,22 @@ const App = () => {
     console.log(sortBlogs)
     return (
       <div>
-        {sortBlogs
-          .map((blog) => (
-            <Blog
-              key={blog.id}
-              blog={blog}
-              updatedBlog={updateObject}
-              deleteBlog={deleteBlog}
-            />
-          ))}</div>)}
+        <div>
+          <Togglable buttonLabel="new blog" ref={blogFormRef}>
+            <BlogForm createBlog={handleNewBlog} />
+          </Togglable>
+          {sortBlogs
+            .map((blog) => (
+              <Link to={`/blogs/${blog.id}`} key={blog.id} >
+                <div style={blogview}>{blog.title}  </div>
+              </Link>
+            ))}</div>
+      </div>)}
 
   const Notification = () => {
     const message = useSelector(({ notification }) => {
       return notification
     })
-    console.log(message)
     if (message === null) {
       return null;
     }
@@ -161,20 +171,21 @@ const App = () => {
   return (
     <div>
       <h2>blogs</h2>
-      <Notification />
       <div>
-        {user.name} logged in <button onClick={handleLogout}>logout</button>
+        <Notification />
+        <div><Link to={'/'}>blogs</Link> <Link to={'/users'}>users</Link> {user.name} logged in <button onClick={handleLogout}>logout</button></div>
       </div>
-      <br />
-      <Togglable buttonLabel="new blog" ref={blogFormRef}>
-        <BlogForm createBlog={handleNewBlog} />
-      </Togglable>
-      <div /> <br />
-      <AllTheBlogs />
-      <br />
-
+      <div>
+        <h2><strong>blog app</strong></h2>
+        <Routes>
+          <Route path="/users" element={<Users />} />
+          <Route path="/users/:id" element={<SpecificUser blogs={blogs} removeBlog={deleteBlog} />} />
+          <Route path="/blogs/:id" element={ <Blog updateLikes={updateObject} removeBlog={deleteBlog}/>} />
+          <Route path="/" element={ <AllTheBlogs /> } />
+        </Routes>
+      </div>
     </div>
-  );
-};
+  )
+}
 
 export default App

@@ -32,6 +32,7 @@ const BlogSlice = createSlice({
             likes: object.likes
           }
         }
+        return blog
       })
     }
   }
@@ -48,7 +49,6 @@ export const setBlogs = ( props ) => {
 }
 
 export const addBlogs = (props) => {
-  console.log(typeof props, props)
   return dispatch => {
     dispatch(addnewBlog(props))
   }
